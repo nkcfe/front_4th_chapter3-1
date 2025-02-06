@@ -1,16 +1,10 @@
 import { ChakraProvider } from '@chakra-ui/react';
-import { render, screen, within, act } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { UserEvent, userEvent } from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { ReactElement } from 'react';
 
-import {
-  setupMockHandlerCreation,
-  setupMockHandlerDeletion,
-  setupMockHandlerUpdating,
-} from '../__mocks__/handlersUtils';
+import { setupMockHandlerCreation, setupMockHandlerDeletion } from '../__mocks__/handlersUtils';
 import App from '../App';
-import { server } from '../setupTests';
 import { Event } from '../types';
 
 // ! HINT. 이 유틸을 사용해 리액트 컴포넌트를 렌더링해보세요.
@@ -43,12 +37,54 @@ const saveSchedule = async (
 // ! HINT. "검색 결과가 없습니다"는 초기에 노출되는데요. 그럼 검증하고자 하는 액션이 실행되기 전에 검증해버리지 않을까요? 이 테스트를 신뢰성있게 만드려면 어떻게 할까요?
 describe('일정 CRUD 및 기본 기능', () => {
   it('입력한 새로운 일정 정보에 맞춰 모든 필드가 이벤트 리스트에 정확히 저장된다.', async () => {
-    // ! HINT. event를 추가 제거하고 저장하는 로직을 잘 살펴보고, 만약 그대로 구현한다면 어떤 문제가 있을 지 고민해보세요.
+    setupMockHandlerCreation();
+    const { user } = setup(<App />);
+
+    const newEvent = {
+      title: '새로운 회의',
+      date: '2024-10-15',
+      startTime: '09:00',
+      endTime: '10:00',
+      description: '팀 미팅',
+      location: '회의실 A',
+      category: '업무',
+    };
+
+    await saveSchedule(user, newEvent);
+
+    const eventList = screen.getByTestId('event-list');
+    const eventTitle = within(eventList).getByText(newEvent.title);
+    const eventDate = within(eventList).getByText(newEvent.date);
+    const eventTime = within(eventList).getByText(`${newEvent.startTime} - ${newEvent.endTime}`);
+    const eventDesc = within(eventList).getByText(newEvent.description);
+    const eventLoc = within(eventList).getByText(newEvent.location);
+    const eventCat = within(eventList).getByText(`카테고리: ${newEvent.category}`);
+
+    expect(eventTitle).toBeInTheDocument();
+    expect(eventDate).toBeInTheDocument();
+    expect(eventTime).toBeInTheDocument();
+    expect(eventDesc).toBeInTheDocument();
+    expect(eventLoc).toBeInTheDocument();
+    expect(eventCat).toBeInTheDocument();
   });
 
   it('기존 일정의 세부 정보를 수정하고 변경사항이 정확히 반영된다', async () => {});
 
-  it('일정을 삭제하고 더 이상 조회되지 않는지 확인한다', async () => {});
+  it('일정을 삭제하고 더 이상 조회되지 않는지 확인한다', async () => {
+    setupMockHandlerDeletion(); // 이미 정의된 유틸리티 함수 사용
+    const { user } = setup(<App />);
+
+    // 삭제 전 일정 존재 확인 (handlers.ts에 정의된 데이터 기준)
+    const eventTitle = '삭제할 이벤트';
+    expect(screen.getByText(eventTitle)).toBeInTheDocument();
+
+    // 삭제 버튼 클릭
+    await user.click(screen.getByTestId('delete-event-button'));
+
+    // 삭제 후 검증
+    expect(screen.queryByText(eventTitle)).not.toBeInTheDocument();
+    expect(screen.getByText('검색 결과가 없습니다.')).toBeInTheDocument();
+  });
 });
 
 describe('일정 뷰', () => {

@@ -4,13 +4,18 @@ import { server } from '../setupTests';
 import { Event } from '../types';
 
 // ? Medium: 아래 여러가지 use 함수는 어떤 역할을 할까요? 어떻게 사용될 수 있을까요?
+// use함수는 http 요청을 가로채서 모의 응답 설정하는 역할.
+
+// 이벤트 생성 핸들러
 export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
   const mockEvents: Event[] = [...initEvents];
 
   server.use(
+    // 이벤트 목록 조회
     http.get('/api/events', () => {
       return HttpResponse.json({ events: mockEvents });
     }),
+    // 이벤트 생성
     http.post('/api/events', async ({ request }) => {
       const newEvent = (await request.json()) as Event;
       newEvent.id = String(mockEvents.length + 1); // 간단한 ID 생성
@@ -20,6 +25,7 @@ export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
   );
 };
 
+// 이벤트 업데이트 핸들러
 export const setupMockHandlerUpdating = () => {
   const mockEvents: Event[] = [
     {
@@ -49,9 +55,11 @@ export const setupMockHandlerUpdating = () => {
   ];
 
   server.use(
+    // 이벤트 목록 조회
     http.get('/api/events', () => {
       return HttpResponse.json({ events: mockEvents });
     }),
+    // 이벤트 업데이트
     http.put('/api/events/:id', async ({ params, request }) => {
       const { id } = params;
       const updatedEvent = (await request.json()) as Event;
@@ -63,6 +71,7 @@ export const setupMockHandlerUpdating = () => {
   );
 };
 
+// 이벤트 삭제 핸들러
 export const setupMockHandlerDeletion = () => {
   const mockEvents: Event[] = [
     {
@@ -80,9 +89,11 @@ export const setupMockHandlerDeletion = () => {
   ];
 
   server.use(
+    // 이벤트 목록 조회
     http.get('/api/events', () => {
       return HttpResponse.json({ events: mockEvents });
     }),
+    // 이벤트 삭제
     http.delete('/api/events/:id', ({ params }) => {
       const { id } = params;
       const index = mockEvents.findIndex((event) => event.id === id);

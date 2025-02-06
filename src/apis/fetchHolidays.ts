@@ -18,6 +18,9 @@ const HOLIDAY_RECORD = {
 type HolidayRecord = typeof HOLIDAY_RECORD;
 type HolidayKeys = keyof HolidayRecord;
 
+/**
+ * 주어진 날짜에 해당하는 공휴일을 반환해주는 함수.
+ */
 export function fetchHolidays(date: Date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
